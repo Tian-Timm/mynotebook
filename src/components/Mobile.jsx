@@ -3,6 +3,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 import { X, Check } from 'lucide-react'
 import { useIdeas } from '../hooks/useIdeas'
+import IdeaCard from './IdeaCard.jsx'
 
 function shuffle(input) {
   const a = [...input]
@@ -43,10 +44,9 @@ export default function Mobile({ setSelectedIdea }) {
                     `h-full w-full flex flex-col items-center p-8 overflow-y-auto ` +
                     ((item?.content?.length || 0) > 180 ? 'justify-start pt-8' : 'justify-center')
                   }
-                  onClick={() => item.id !== 'empty' && setSelectedIdea(item)}
                 >
-                  <div className="max-w-prose text-left text-xl font-normal leading-relaxed whitespace-pre-wrap text-zinc-300 line-clamp-5">
-                    {item.content}
+                  <div className="w-full max-w-prose">
+                    <IdeaCard idea={item} onClick={() => item.id !== 'empty' && setSelectedIdea(item)} />
                   </div>
                 </div>
               </SwiperSlide>

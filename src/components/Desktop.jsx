@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { useIdeas } from '../hooks/useIdeas'
+import IdeaCard from './IdeaCard.jsx'
 
 export default function Desktop({ setSelectedIdea }) {
   const { ideas, addIdea, deleteIdea } = useIdeas()
@@ -70,28 +71,26 @@ export default function Desktop({ setSelectedIdea }) {
         >
           {(sorted.length ? sorted : [{ id: 'empty', content: 'No ideas yet' }]).map(
             (item) => (
-              <div
-                key={item.id}
-                className="relative rounded-lg p-6 bg-zinc-900 border border-zinc-800/50 hover:bg-zinc-800 transition cursor-pointer"
-                onClick={() => item.id !== 'empty' && setSelectedIdea(item)}
-              >
+              <div key={item.id} className="relative">
                 {item.id !== 'empty' && (
                   <button
                     aria-label="delete"
-                    onClick={async () => {
+                    onClick={async (e) => {
+                      e.stopPropagation()
                       if (confirm('Delete this idea?')) {
                         await deleteIdea(item.id)
                         showToast('Deleted')
                       }
                     }}
-                    className="absolute top-3 right-3 text-zinc-500 hover:text-red-500 transition-colors"
+                    className="absolute top-3 right-3 text-zinc-500 hover:text-red-500 transition-colors z-10"
                   >
                     <Trash2 size={16} />
                   </button>
                 )}
-                <div className="whitespace-pre-wrap text-lg leading-relaxed text-zinc-300 line-clamp-5">
-                  {item.content}
-                </div>
+                <IdeaCard
+                  idea={item}
+                  onClick={() => item.id !== 'empty' && setSelectedIdea(item)}
+                />
               </div>
             )
           )}

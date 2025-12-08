@@ -1,59 +1,63 @@
-import { useEffect, useState } from 'react'
-import Mobile from './components/Mobile.jsx'
-import Desktop from './components/Desktop.jsx'
+import { useState } from 'react'
+import MobileLayout from '@/components/layout/MobileLayout'
+import DesktopLayout from '@/components/layout/DesktopLayout'
+import { useMobile } from '@/hooks/use-mobile'
+import { useIdeas } from './hooks/useIdeas'
+import CreateIdeaDialog from '@/components/CreateIdeaDialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export default function App() {
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return window.innerWidth < 768
-  })
+  const isMobile = useMobile()
+  const { ideas, addIdea, deleteIdea } = useIdeas()
   const [selectedIdea, setSelectedIdea] = useState(null)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [localCreated, setLocalCreated] = useState([])
 
-  useEffect(() => {
-    const mql = window.matchMedia('(max-width: 767px)')
-    const handler = (e) => setIsMobile(e.matches)
-    if (mql.addEventListener) mql.addEventListener('change', handler)
-    else mql.addListener(handler)
-    return () => {
-      if (mql.removeEventListener) mql.removeEventListener('change', handler)
-      else mql.removeListener(handler)
+  const viewIdeas = [...localCreated, ...ideas]
+
+  const handleSaveIdea = ({ content }) => {
+    const now = new Date().toISOString()
+    const newIdea = { id: Date.now(), created_at: now, title: '', content }
+    setLocalCreated((prev) => [newIdea, ...prev])
+    setIsCreateOpen(false)
+  }
+
+  const handleDeleteIdea = async (id) => {
+    if (typeof id === 'number') {
+      setLocalCreated((prev) => prev.filter((i) => i.id !== id))
+      return
     }
-  }, [])
+    await deleteIdea(id)
+    setLocalCreated((prev) => prev.filter((i) => String(i.id) !== String(id)))
+  }
 
   return (
     <div className="min-h-screen w-full bg-zinc-950 text-zinc-100 font-sans">
       {isMobile ? (
-        <Mobile setSelectedIdea={setSelectedIdea} />
+        <MobileLayout ideas={viewIdeas} onIdeaClick={setSelectedIdea} onNewClick={() => setIsCreateOpen(true)} />
       ) : (
-        <Desktop setSelectedIdea={setSelectedIdea} />
+        <DesktopLayout ideas={viewIdeas} onIdeaClick={setSelectedIdea} addIdea={addIdea} deleteIdea={handleDeleteIdea} />
       )}
-      {selectedIdea && (
-        <IdeaModal idea={selectedIdea} onClose={() => setSelectedIdea(null)} />
-      )}
+
+      <CreateIdeaDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} onSave={handleSaveIdea} />
+      <IdeaModal idea={selectedIdea} onClose={() => setSelectedIdea(null)} />
     </div>
   )
 }
 
 function IdeaModal({ idea, onClose }) {
+  const open = !!idea
   return (
-    <div
-      className="fixed inset-0 bg-black/80 z-[60] flex justify-center items-center p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-zinc-900 border border-zinc-800/50 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 px-3 py-1 rounded-md bg-black border border-zinc-700/60 text-zinc-100 hover:border-zinc-500 transition"
-        >
-          Close
-        </button>
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Idea</DialogTitle>
+          <DialogDescription>Full content</DialogDescription>
+        </DialogHeader>
         <div className="whitespace-pre-wrap text-lg text-zinc-200">
           {idea?.content}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
